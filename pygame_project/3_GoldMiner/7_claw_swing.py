@@ -45,7 +45,8 @@ class Claw(pygame.sprite.Sprite):
         offset_rotated = self.offset.rotate(self.angle) # rotate : 해당 벡터(Vector2) 값을 회전 시킨 벡터 값 반환
 
         self.rect = self.image.get_rect(center=self.position+offset_rotated)
-        # 집게 이미지 회전 시 rect가 계속 변경되므로 원래의 중심점에서 벗어나 회전 -> 중심을 처음 집게 이미지의 center로 맞춰주기
+        # 집게 이미지 회전 시 rect가 변하지 않으면 동떨어져 움직임
+        # -> rect 변경시키고 중심을 변경되는 rect의 center로 맞춰주기
 
         # print(self.rect)
         pygame.draw.rect(screen, RED, self.rect, 1)

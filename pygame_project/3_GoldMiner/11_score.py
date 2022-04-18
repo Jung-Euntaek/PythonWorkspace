@@ -1,9 +1,9 @@
-# 집게 발사
-# 현재 위치로부터 집게 뻗는 동작
-# 화면 밖으로 뻗어나가면 다시 돌아오도록 처리
-# 뻗을 때 속도, 돌아올 때 속도 적용
+# 게임 스코어 처리
+# 목표 점수 (1500)
+# 현재 점수
 
 import os
+import math
 import pygame
 
 # 집게 클래스
@@ -46,7 +46,7 @@ class Claw(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(center=self.position+offset_rotated)
         # 집게 이미지 회전 시 rect가 변하지 않으면 동떨어져 움직임
         # -> rect 변경시키고 중심을 변경되는 rect의 center로 맞춰주기
-
+        
     def set_direction(self, direction):
         self.direction = direction
 
@@ -61,22 +61,46 @@ class Claw(pygame.sprite.Sprite):
 
 # 보석 클래스
 class Gemstone(pygame.sprite.Sprite):
-    def __init__(self, image, position):
+    def __init__(self, image, position, price, speed):
         super().__init__()
         self.image = image
         self.rect = image.get_rect(center=position) # Sprite cls 상속 시 image와 rect 변수 반드시 정의
+        self.price = price
+        self.speed = speed
 
+    def set_position(self, position, angle): # 집게 중심과 보석 중심 일치시키는 메소드
+        r = self.rect.size[0] // 2 # 원 이미지로 간주 시 반지름과 동일
+        rad_angle = math.radians(angle) # 각도
+        to_x = r * math.cos(rad_angle) # 삼각형 밑변
+        to_y = r * math.sin(rad_angle) # 삼각형 높이
+        self.rect.center = (position[0] + to_x, position[1] + to_y)
 
 def setup_gemstone():
+    small_gold_price, small_gold_speed = 100, 5
+    big_gold_price, big_gold_speed = 300, 2
+    stone_price, stone_speed = 10, 2
+    diamond_price, diamond_speed = 600, 7
+
     # 작은 금
-    small_gold = Gemstone(gemstone_images[0], (200, 380))
+    small_gold = Gemstone(gemstone_images[0], (200, 380), small_gold_price, small_gold_speed)
     gemstone_group.add(small_gold) # 그룹에 추가
     # 큰 금
-    gemstone_group.add(Gemstone(gemstone_images[1], (300, 500)))
+    gemstone_group.add(Gemstone(gemstone_images[1], (300, 500), big_gold_price, big_gold_speed))
     # 돌
-    gemstone_group.add(Gemstone(gemstone_images[2], (300, 380)))
+    gemstone_group.add(Gemstone(gemstone_images[2], (300, 380), stone_price, stone_speed))
     # 다이아몬드
-    gemstone_group.add(Gemstone(gemstone_images[3], (900, 420)))
+    gemstone_group.add(Gemstone(gemstone_images[3], (900, 420), diamond_price, diamond_speed))
+
+def update_score(score):
+    global curr_score
+    curr_score += score
+
+def display_score():
+    txt_curr_score = game_font.render(f"Curr Score : {curr_score:,}", True, BLACK)
+    screen.blit(txt_curr_score, (50, 20))
+
+    txt_goal_score = game_font.render(f"Goal Score : {goal_score:,}", True, BLACK)
+    screen.blit(txt_goal_score, (50, 80))
 
 pygame.init()
 screen_width = 960
@@ -84,10 +108,16 @@ screen_height = 640
 screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption("Gold Miner")
 clock = pygame.time.Clock()
+game_font = pygame.font.SysFont("arialrounded", 30)
+
+# 점수 관련 변수
+goal_score = 1500 # 목표 점수
+curr_score = 0 # 현재 점수
 
 # 게임 관련 변수
 default_offset_x_claw = 30 # 중심점으로부터 집게까지의 기본 x 간격
 to_x = 0 # x 좌표 기준으로 집게 이미지 이동시킬 값 저장 변수
+caught_gemstone = None # 집게로 잡은 보석 정보
 
 # 속도 변수
 move_speed = 12 # 발사 시 이동 스피드 (x 좌표 기준으로 증가되는 값)
@@ -108,17 +138,17 @@ background = pygame.image.load(os.path.join(current_path, "background.png"))
 
 # 4개 보석 이미지 불러오기 (작은 금, 큰 금, 돌, 다이아몬드)
 gemstone_images = [
-    pygame.image.load(os.path.join(current_path, "small_gold.png")),
-    pygame.image.load(os.path.join(current_path, "big_gold.png")),
-    pygame.image.load(os.path.join(current_path, "stone.png")),
-    pygame.image.load(os.path.join(current_path, "diamond.png"))]
+    pygame.image.load(os.path.join(current_path, "small_gold.png")).convert_alpha(),
+    pygame.image.load(os.path.join(current_path, "big_gold.png")).convert_alpha(),
+    pygame.image.load(os.path.join(current_path, "stone.png")).convert_alpha(),
+    pygame.image.load(os.path.join(current_path, "diamond.png")).convert_alpha()] # convert_alpha() : 이미지에 투명도 호출
 
 # 보석 그룹
 gemstone_group = pygame.sprite.Group()
 setup_gemstone() # 게임에 원하는 만큼의 보석 정의
 
 # 집게
-claw_image = pygame.image.load(os.path.join(current_path, "claw.png"))
+claw_image = pygame.image.load(os.path.join(current_path, "claw.png")).convert_alpha()
 claw = Claw(claw_image, (screen_width // 2, 98))
 
 running = True
@@ -140,11 +170,30 @@ while running:
         to_x = 0
         claw.set_init_state() # 처음 상태로 되돌림
 
+        if caught_gemstone: # 잡힌 보석이 있다면
+            update_score(caught_gemstone.price) # 점수 업데이트 처리
+            gemstone_group.remove(caught_gemstone) # 그룹에서 잡힌 보석 제외
+            caught_gemstone = None
+
+    if not caught_gemstone: # 잡힌 보석 없다면 충돌 체크
+        for gemstone in gemstone_group:
+            # if claw.rect.colliderect(gemstone.rect): # 직사각형 기준 충돌 처리
+            if pygame.sprite.collide_mask(claw, gemstone): # 투명 영역 제외하고 실제 이미지 영역에 대해 충돌 처리
+                caught_gemstone = gemstone # 잡힌 보석
+                to_x = -gemstone.speed # 잡힌 보석의 이동 속도
+                break
+
+    if caught_gemstone:
+        caught_gemstone.set_position(claw.rect.center, claw.angle)
+
     screen.blit(background, (0, 0)) # 화면 좌상단부터 그리기
 
     gemstone_group.draw(screen) # 그룹 내 모든 스프라이트를 screen에 그림
     claw.update(to_x)
     claw.draw(screen)
+
+    # 점수 정보 보여줌
+    display_score()
     
     pygame.display.update()
 
