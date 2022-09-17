@@ -9,3 +9,7 @@ Ch 3.
 Ch 5.
 - 구글에 "user agent string" → "what is my user agent?"
 - user agent 복사
+
+Ch 6.
+- pip install beautifulsoup4
+- pip instal lxml
