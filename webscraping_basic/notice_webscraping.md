@@ -13,3 +13,21 @@ Ch 5.
 Ch 6.
 - pip install beautifulsoup4
 - pip instal lxml
+
+Ch 3. (rpa)
+- "selenium with python" site 참고
+- pip install selenium
+- Chrome driver 설치
+: "chrome://version" 입력 → 버전 확인
+: 'chromedriver' 입력, 버전 맞춰 다운로드
+: zip 폴더 workspace에 복사 후 압축 풀기 (exe 폴더)
+
+- browser.back(), browser.forward(), browser.refresh(), browser.save_screenshot(), browser.maximize_window()
+- browser.close() : 탭 닫기, browser.quit() : 창 닫기
+- from selenium.webdriver.common.keys import Keys()
+: elem.send_keys(Keys.ENTER) # 엔터 키 입력
+- elem.clear() : 텍스트 삭제
+
+Ch 4.
+- browser.switch_to.frame("iframe ID") # frame 전환
+- browser.switch_to.default_content() # 원래 frame 복귀

@@ -1,3 +1,5 @@
+# 브라우저 직접 안 띄우고 작업
+
 from selenium import webdriver
 
 options = webdriver.ChromeOptions()
