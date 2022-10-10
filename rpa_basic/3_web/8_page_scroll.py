@@ -16,7 +16,7 @@ elem.send_keys(Keys.ENTER)
 
 # 스크롤
 # # 지정 위치로 스크롤 내리기
-# browser.execute_script("window.scrollTo(0, 1080)") # x, y 좌표
+# browser.execute_script("window.scrollTo(0, 1080)") # 해당 x, y 좌표가 좌측 상단에 위치
 # browser.execute_script("window.scrollTo(0, 2080)")
 
 # 현재 화면 가장 아래로 스크롤

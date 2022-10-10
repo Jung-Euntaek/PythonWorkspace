@@ -1,3 +1,5 @@
+# 탭 전환할 때
+
 import time
 from selenium import webdriver
 
